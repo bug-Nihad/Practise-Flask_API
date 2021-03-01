@@ -116,11 +116,53 @@ class Similarity(Resource):
         }
         return jsonify(retJson)
 
+#Resource for refilling token.
+class Refill(Resource):
+    def post(self):
+        #Get posted Data
+        posted_data = request.json
+        username = posted_data["username"]
+        pw = posted_data["adminpwd"]
+        refillAmount = posted_data["refill"]
+        adminpw = "xyz123"
+        #Check if username exists or not
+        if not checkUser(username):
+            retJson = {
+                "status": 301,
+                "message": "Username invalid"
+            }
+            return jsonify(retJson)
+        #Check if admin password is correct
+        if pw != adminpw:
+            retJson = {
+                "status": 304,
+                "message": "Invalid Admin Password."
+            }
+            return jsonify(retJson)
+
+        #All are set. Update the token number.
+        remainingToken = checkToken(username)
+        users.update({"username": username},{
+            "$set": {
+                "tokens": remainingToken + refillAmount
+            }
+        })
+        retJson = {
+            "status": 200,
+            "message": "Token Refilled Successfully."
+        }
+        return jsonify(retJson)
+
+
+
+
 
 
 #Assigning all resources with addresses
 api.add_resource(Register, '/register')
 api.add_resource(Similarity, '/check')
+api.add_resource(Refill, '/refill')
+
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=80, debug=True)
